@@ -17,7 +17,7 @@ describe("crowdfunding", () => {
   let campaignDeadline: number;
 
   before(async () => {
-    [statePda] = await PublicKey.findProgramAddress(
+    [statePda] = await PublicKey.findProgramAddressSync(
       [Buffer.from("campaign_state")],
       program.programId
     );
@@ -115,7 +115,7 @@ describe("crowdfunding", () => {
       // wait until deadline passes
       console.log("Waiting for 7 seconds for deadline to pass.....");
       await new Promise((resolve) => setTimeout(resolve, 7_000));
-      
+
       try {
         await program.methods
           .contribute(new anchor.BN(500_000))
