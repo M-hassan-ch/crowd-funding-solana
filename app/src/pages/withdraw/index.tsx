@@ -5,7 +5,7 @@ import { useSolanaClient } from "@gillsdk/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getWithdrawInstruction } from "@/generated/instructions";
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { CONNECTION } from "@/constants";
+import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
 import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
 
 export default function Withdraw() {
@@ -30,7 +30,8 @@ export default function Withdraw() {
                     getWithdrawInstruction({
                         campaign: campaignAddress,
                         owner: signer,
-                        systemProgram: SYSTEM_PROGRAM_ADDRESS
+                        systemProgram: SYSTEM_PROGRAM_ADDRESS,
+                        state: address(GLOBAL_CAMPAIGN_STATE_ADDRESS.toBase58()),
                     })
                 ],
                 latestBlockhash

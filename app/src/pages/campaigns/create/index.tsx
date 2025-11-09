@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   AccountRole,
   address,
@@ -14,10 +15,13 @@ import { Transaction, PublicKey } from "@solana/web3.js";
 import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
 import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
 import { useState } from "react";
+import { useCampaigns } from "@/context/CampaignContext";
 
 export default function CreateCampaign() {
   const { publicKey, signTransaction } = useWallet();
   const { rpc } = useSolanaClient();
+  const { campaigns, setCampaigns } = useCampaigns();
+  const router = useRouter();
 
   // state
   const [title, setTitle] = useState("");
@@ -107,7 +111,19 @@ export default function CreateCampaign() {
         console.error("Tx failed:", confirmation.value.err);
       } else {
         alert(`Transaction successful! Signature: ${signature}`);
+        setCampaigns([
+          ...campaigns,
+          {
+            title,
+            description,
+            deadline: Number(deadlineBigInt),
+            address: campaignPDA.toBase58(),
+            owner: publicKey.toBase58(),
+            total_contribution: BigInt(0),
+          },
+        ]);
         console.log("Transaction confirmed on-chain:", signature);
+        router.push("/campaigns/mine");
       }
     } catch (error: any) {
       console.error(error);

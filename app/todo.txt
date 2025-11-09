@@ -1,0 +1,4 @@
+✔ View Campaign modal, Add clickable details modal
+✔ Copy address button
+✔ “Contribute” inline form
+✔ Tags / statuses (Active / Expired)

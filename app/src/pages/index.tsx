@@ -9,6 +9,7 @@ import { getActualContributions } from "@/utils";
 import { fetchAllMaybeCampaign } from "@/generated/accounts/campaign";
 import { Campaign } from "@/types";
 import { PublicKey } from "@solana/web3.js";
+import { useCampaigns } from "@/context/CampaignContext";
 
 export default function Home() {
   const { publicKey } = useWallet();
@@ -19,58 +20,72 @@ export default function Home() {
       decoder: getCampaignStateDecoder(),
     });
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const { campaigns, setCampaigns } = useCampaigns();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      if (!publicKey) return;
-      if (!isCampaignStateLoading && campaignState) {
-        try {
-          setLoading(true);
-
-          const maybeAccounts = await fetchAllMaybeCampaign(
-            rpc,
-            campaignState.data.campaigns
-          );
-
-          const existingCampaigns = maybeAccounts.filter(
-            (acc): acc is typeof acc & { exists: true } => acc.exists
-          );
-
-          const parsedCampaigns: Campaign[] = await Promise.all(
-            existingCampaigns.map(async (campaign) => {
-              const actualContributions = await getActualContributions(
-                campaign,
-                CONNECTION
-              );
-              return {
-                owner: new PublicKey(campaign.data.owner).toBase58(),
-                title: campaign.data.title,
-                description: campaign.data.description,
-                deadline: Number(campaign.data.deadline),
-                total_contribution: BigInt(campaign.data.totalContribution),
-                address: new PublicKey(campaign.address).toBase58(),
-                actualContributions,
-              };
-            })
-          );
-
-          setCampaigns(parsedCampaigns);
-        } catch (err) {
-          console.error("Error fetching campaigns:", err);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchCampaigns();
+    // load on first visit only if empty (to avoid double-fetch on SSR)
+    if (campaigns.length === 0) fetchCampaigns();
   }, [publicKey, campaignState, isCampaignStateLoading, rpc]);
+
+  const fetchCampaigns = async () => {
+    if (!publicKey) return;
+    if (!isCampaignStateLoading && campaignState) {
+      try {
+        setLoading(true);
+
+        const maybeAccounts = await fetchAllMaybeCampaign(
+          rpc,
+          campaignState.data.campaigns
+        );
+
+        const existingCampaigns = maybeAccounts.filter(
+          (acc): acc is typeof acc & { exists: true } => acc.exists
+        );
+
+        const parsedCampaigns: Campaign[] = await Promise.all(
+          existingCampaigns.map(async (campaign) => {
+            const actualContributions = await getActualContributions(
+              campaign,
+              CONNECTION
+            );
+            return {
+              owner: new PublicKey(campaign.data.owner).toBase58(),
+              title: campaign.data.title,
+              description: campaign.data.description,
+              deadline: Number(campaign.data.deadline),
+              total_contribution: BigInt(campaign.data.totalContribution),
+              address: new PublicKey(campaign.address).toBase58(),
+              actualContributions,
+            };
+          })
+        );
+
+        setCampaigns(parsedCampaigns);
+      } catch (err) {
+        console.error("Error fetching campaigns:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    await fetchCampaigns();
+    setLoading(false);
+  };
 
   return (
     <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-start py-16 px-6 bg-white dark:bg-black mx-auto">
       <h1 className="text-2xl font-bold mb-4">All Campaigns</h1>
+      <button
+        onClick={handleRefresh}
+        disabled={loading}
+        className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700 mb-4 cursor-pointer"
+      >
+        {loading ? "Refreshing..." : "Refresh"}
+      </button>
 
       {loading && <p>Loading campaigns...</p>}
       {!loading && campaigns.length === 0 && <p>No campaigns found</p>}

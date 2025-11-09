@@ -8,6 +8,7 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import Navbar from "@/components/Navbar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { CampaignProvider } from "@/context/CampaignContext";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -36,9 +37,11 @@ export default function App({ Component, pageProps }: AppProps) {
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
             <Navbar />
-            <main className="pt-4">
-              <Component {...pageProps} />
-            </main>
+            <CampaignProvider>
+              <main className="pt-4">
+                <Component {...pageProps} />
+              </main>
+            </CampaignProvider>
           </QueryClientProvider>
         </WalletModalProvider>
       </WalletProvider>
