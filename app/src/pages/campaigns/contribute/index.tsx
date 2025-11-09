@@ -1,28 +1,25 @@
 "use client";
 
-import { AccountRole, address, createNoopSigner, createTransaction } from "gill";
+import { AccountRole, Address, address, createNoopSigner, createTransaction, LAMPORTS_PER_SOL } from "gill";
 import { useSolanaClient } from "@gillsdk/react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { deriveCampaignPDA } from "@/utils";
-import { getCreateCampaignInstruction } from "@/generated/instructions";
+import { getContributeInstruction } from "@/generated/instructions";
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
+import { CONNECTION } from "@/constants";
 import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
 
-export default function CreateCampaign() {
+export default function Contribute() {
     const { publicKey, signTransaction, connect } = useWallet();
     const { rpc } = useSolanaClient();
 
-    const createCampaign = async () => {
+    //fetch campaing account address from the route URL
+
+    const contribute = async (campaignAddress: Address, amountToDonate: string) => {
         try {
             if (!publicKey || !signTransaction) {
                 window.alert("No wallet connected");
                 return;
             }
-            const title = "Test Campaign2";
-            const description = "Test Description";
-            const deadline = BigInt("1762701060");
-            const campaignPDA = deriveCampaignPDA(publicKey, title);
             const signer = createNoopSigner(address(publicKey.toBase58()));
             const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
@@ -30,13 +27,10 @@ export default function CreateCampaign() {
                 version: "legacy",
                 feePayer: address(publicKey.toBase58()),
                 instructions: [
-                    getCreateCampaignInstruction({
-                        campaign: address(campaignPDA.toBase58()),
-                        state: address(GLOBAL_CAMPAIGN_STATE_ADDRESS.toBase58()),
-                        user: signer,
-                        title: title,
-                        description: description,
-                        deadline: deadline,
+                    getContributeInstruction({
+                        campaign: campaignAddress,
+                        contributor: signer,
+                        amount: BigInt(Number(amountToDonate) * LAMPORTS_PER_SOL),
                         systemProgram: SYSTEM_PROGRAM_ADDRESS
                     })
                 ],
@@ -71,7 +65,8 @@ export default function CreateCampaign() {
 
     return (
         <div>
-            <button onClick={createCampaign}>Create Campaign</button>
+            {/* contributing 0.0001 SOL */}
+            <button onClick={()=> {contribute(address("Fz3B131okxZAug3ws1c2SotXoePENJKYDWVzuThYpPT4"), " 0.0001")}}>Contribute</button>
         </div>
     );
 }
