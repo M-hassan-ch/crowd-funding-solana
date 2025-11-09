@@ -8,21 +8,44 @@ import { getCreateCampaignInstruction } from "@/generated/instructions";
 import { Transaction, PublicKey } from "@solana/web3.js";
 import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
 import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
+import { useState } from "react";
 
 export default function CreateCampaign() {
-    const { publicKey, signTransaction, connect } = useWallet();
+    const { publicKey, signTransaction } = useWallet();
     const { rpc } = useSolanaClient();
 
+    // state
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [deadline, setDeadline] = useState("");
+    const [loading, setLoading] = useState(false);
+
+
     const createCampaign = async () => {
+        if (!publicKey || !signTransaction) {
+            alert("No wallet connected");
+            return;
+        }
+
+        if (!title || !description || !deadline) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        const deadlineBigInt = BigInt(Math.floor(new Date(deadline).getTime() / 1000));
+        if (!deadlineBigInt || deadlineBigInt <= BigInt(Math.floor(Date.now() / 1000))) {
+            return alert("Deadline must be in the future");
+        }
+
+        setLoading(true);
+
         try {
-            if (!publicKey || !signTransaction) {
-                window.alert("No wallet connected");
+            const campaignPDA = deriveCampaignPDA(publicKey, title);
+            if (!campaignPDA) {
+                alert("Failed to derive campaign address");
                 return;
             }
-            const title = "Test Campaign2";
-            const description = "Test Description";
-            const deadline = BigInt("1762701060");
-            const campaignPDA = deriveCampaignPDA(publicKey, title);
+
             const signer = createNoopSigner(address(publicKey.toBase58()));
             const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
@@ -36,7 +59,7 @@ export default function CreateCampaign() {
                         user: signer,
                         title: title,
                         description: description,
-                        deadline: deadline,
+                        deadline: deadlineBigInt,
                         systemProgram: SYSTEM_PROGRAM_ADDRESS
                     })
                 ],
@@ -62,16 +85,44 @@ export default function CreateCampaign() {
             }
             const signedTx = await signTransaction(transaction);
             const signature = await CONNECTION.sendRawTransaction(signedTx.serialize())
+            console.log("end:::", {campaignPDA,signer,deadline,deadlineBigInt,gillTransaction});
             console.log("Signature:", signature.toString());
-        } catch (error) {
-            window.alert("Error while creating campaign")
-            console.log(error);
+        } catch (error:any) {
+            console.error(error);
+            alert(`Error creating campaign: ${error.message || error}`);
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
-        <div>
-            <button onClick={createCampaign}>Create Campaign</button>
+        <div className="max-w-md mx-auto p-6 bg-white dark:bg-zinc-900 rounded-lg shadow-md space-y-4">
+        <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Campaign Title"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
+        />
+        <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Campaign Description"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
+        />
+        <input
+            type="datetime-local"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
+        />
+        <button
+            onClick={createCampaign}
+            disabled={loading || !title || !description || !deadline}
+            className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+            {loading ? "Creating..." : "Create Campaign"}
+        </button>
         </div>
     );
 }

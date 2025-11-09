@@ -6,6 +6,7 @@ import { SolanaProvider } from "@gillsdk/react";
 import { WalletProvider } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import Navbar from "@/components/Navbar";
 
 import "@solana/wallet-adapter-react-ui/styles.css"; // required for modal styles
 
@@ -20,7 +21,10 @@ export default function App({ Component, pageProps }: AppProps) {
     <SolanaProvider client={client}>
       <WalletProvider wallets={wallets} autoConnect={true}>
         <WalletModalProvider>
-          <Component {...pageProps} />
+        <Navbar />
+          <main className="pt-4">
+            <Component {...pageProps} />
+          </main>
         </WalletModalProvider>
       </WalletProvider>
     </SolanaProvider>
