@@ -30,12 +30,10 @@ export default function CreateCampaign() {
       alert("No wallet connected");
       return;
     }
-
     if (!title || !description || !deadline) {
       alert("Please fill all fields");
       return;
     }
-
     const deadlineBigInt = BigInt(
       Math.floor(new Date(deadline).getTime() / 1000)
     );
@@ -45,19 +43,15 @@ export default function CreateCampaign() {
     ) {
       return alert("Deadline must be in the future");
     }
-
     setLoading(true);
-
     try {
       const campaignPDA = deriveCampaignPDA(publicKey, title);
       if (!campaignPDA) {
         alert("Failed to derive campaign address");
         return;
       }
-
       const signer = createNoopSigner(address(publicKey.toBase58()));
       const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
-
       const gillTransaction = createTransaction({
         version: "legacy",
         feePayer: address(publicKey.toBase58()),
@@ -74,12 +68,10 @@ export default function CreateCampaign() {
         ],
         latestBlockhash,
       });
-
       // Convert gill transaction to web3.js Transaction.
       const transaction = new Transaction();
       transaction.feePayer = publicKey;
       transaction.recentBlockhash = latestBlockhash.blockhash;
-
       // Convert gill instructions to web3.js instructions.
       for (const instruction of gillTransaction.instructions) {
         transaction.add({
@@ -101,7 +93,6 @@ export default function CreateCampaign() {
       const signature = await CONNECTION.sendRawTransaction(
         signedTx.serialize()
       );
-
       const confirmation = await CONNECTION.confirmTransaction(
         {
           signature,
@@ -110,7 +101,6 @@ export default function CreateCampaign() {
         },
         "confirmed"
       );
-
       // Check if transaction succeeded
       if (confirmation.value.err) {
         alert("Transaction failed: " + JSON.stringify(confirmation.value.err));
