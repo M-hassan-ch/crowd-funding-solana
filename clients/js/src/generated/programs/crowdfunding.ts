@@ -21,7 +21,7 @@ import {
 } from '../instructions';
 
 export const CROWDFUNDING_PROGRAM_ADDRESS =
-  '2fqEGPkgxeCSKgSmidAK6EVHxaEXeu2q4jDM9eHAicEX' as Address<'2fqEGPkgxeCSKgSmidAK6EVHxaEXeu2q4jDM9eHAicEX'>;
+  '9h3Hsm8ypVtvQxyavYjqR87g4eyhixBHX3uvTLCpAAuK' as Address<'9h3Hsm8ypVtvQxyavYjqR87g4eyhixBHX3uvTLCpAAuK'>;
 
 export enum CrowdfundingAccount {
   Campaign,
@@ -120,7 +120,7 @@ export function identifyCrowdfundingInstruction(
 }
 
 export type ParsedCrowdfundingInstruction<
-  TProgram extends string = '2fqEGPkgxeCSKgSmidAK6EVHxaEXeu2q4jDM9eHAicEX',
+  TProgram extends string = '9h3Hsm8ypVtvQxyavYjqR87g4eyhixBHX3uvTLCpAAuK',
 > =
   | ({
       instructionType: CrowdfundingInstruction.Contribute;

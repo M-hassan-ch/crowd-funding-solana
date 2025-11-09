@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{clock::Clock, system_instruction};
 
-declare_id!("2fqEGPkgxeCSKgSmidAK6EVHxaEXeu2q4jDM9eHAicEX");
+declare_id!("9h3Hsm8ypVtvQxyavYjqR87g4eyhixBHX3uvTLCpAAuK");
 
 #[program]
 pub mod crowdfunding {
@@ -84,6 +84,10 @@ pub mod crowdfunding {
             ErrorCode::DeadlineNotReached
         );
 
+        // Remove the campaign from the global state before closing.
+        let state = &mut ctx.accounts.state;
+        state.campaigns.retain(|&campaign_key| campaign_key != campaign.key());
+
         // Account will be closed automatically by Anchor and lamports
         // sent to owner because of `close = owner`.
         Ok(())
@@ -138,6 +142,8 @@ pub struct Withdraw<'info> {
     pub campaign: Account<'info, Campaign>,
     #[account(mut)]
     pub owner: Signer<'info>,
+    #[account(mut, seeds = [b"campaign_state"], bump)]
+    pub state: Account<'info, CampaignState>,
     pub system_program: Program<'info, System>,
 }
 

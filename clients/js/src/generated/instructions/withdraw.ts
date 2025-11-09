@@ -12,6 +12,7 @@ import {
   fixEncoderSize,
   getBytesDecoder,
   getBytesEncoder,
+  getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
   transformEncoder,
@@ -45,6 +46,7 @@ export type WithdrawInstruction<
   TProgram extends string = typeof CROWDFUNDING_PROGRAM_ADDRESS,
   TAccountCampaign extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
+  TAccountState extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | AccountMeta<string> = '11111111111111111111111111111111',
@@ -60,6 +62,9 @@ export type WithdrawInstruction<
         ? WritableSignerAccount<TAccountOwner> &
             AccountSignerMeta<TAccountOwner>
         : TAccountOwner,
+      TAccountState extends string
+        ? WritableAccount<TAccountState>
+        : TAccountState,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -94,28 +99,124 @@ export function getWithdrawInstructionDataCodec(): FixedSizeCodec<
   );
 }
 
-export type WithdrawInput<
+export type WithdrawAsyncInput<
   TAccountCampaign extends string = string,
   TAccountOwner extends string = string,
+  TAccountState extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   campaign: Address<TAccountCampaign>;
   owner: TransactionSigner<TAccountOwner>;
+  state?: Address<TAccountState>;
+  systemProgram?: Address<TAccountSystemProgram>;
+};
+
+export async function getWithdrawInstructionAsync<
+  TAccountCampaign extends string,
+  TAccountOwner extends string,
+  TAccountState extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address = typeof CROWDFUNDING_PROGRAM_ADDRESS,
+>(
+  input: WithdrawAsyncInput<
+    TAccountCampaign,
+    TAccountOwner,
+    TAccountState,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  WithdrawInstruction<
+    TProgramAddress,
+    TAccountCampaign,
+    TAccountOwner,
+    TAccountState,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress = config?.programAddress ?? CROWDFUNDING_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    campaign: { value: input.campaign ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    state: { value: input.state ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.state.value) {
+    accounts.state.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([
+            99, 97, 109, 112, 97, 105, 103, 110, 95, 115, 116, 97, 116, 101,
+          ])
+        ),
+      ],
+    });
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  return Object.freeze({
+    accounts: [
+      getAccountMeta(accounts.campaign),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.state),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    data: getWithdrawInstructionDataEncoder().encode({}),
+    programAddress,
+  } as WithdrawInstruction<
+    TProgramAddress,
+    TAccountCampaign,
+    TAccountOwner,
+    TAccountState,
+    TAccountSystemProgram
+  >);
+}
+
+export type WithdrawInput<
+  TAccountCampaign extends string = string,
+  TAccountOwner extends string = string,
+  TAccountState extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  campaign: Address<TAccountCampaign>;
+  owner: TransactionSigner<TAccountOwner>;
+  state: Address<TAccountState>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getWithdrawInstruction<
   TAccountCampaign extends string,
   TAccountOwner extends string,
+  TAccountState extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof CROWDFUNDING_PROGRAM_ADDRESS,
 >(
-  input: WithdrawInput<TAccountCampaign, TAccountOwner, TAccountSystemProgram>,
+  input: WithdrawInput<
+    TAccountCampaign,
+    TAccountOwner,
+    TAccountState,
+    TAccountSystemProgram
+  >,
   config?: { programAddress?: TProgramAddress }
 ): WithdrawInstruction<
   TProgramAddress,
   TAccountCampaign,
   TAccountOwner,
+  TAccountState,
   TAccountSystemProgram
 > {
   // Program address.
@@ -125,6 +226,7 @@ export function getWithdrawInstruction<
   const originalAccounts = {
     campaign: { value: input.campaign ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
+    state: { value: input.state ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -143,6 +245,7 @@ export function getWithdrawInstruction<
     accounts: [
       getAccountMeta(accounts.campaign),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.state),
       getAccountMeta(accounts.systemProgram),
     ],
     data: getWithdrawInstructionDataEncoder().encode({}),
@@ -151,6 +254,7 @@ export function getWithdrawInstruction<
     TProgramAddress,
     TAccountCampaign,
     TAccountOwner,
+    TAccountState,
     TAccountSystemProgram
   >);
 }
@@ -163,7 +267,8 @@ export type ParsedWithdrawInstruction<
   accounts: {
     campaign: TAccountMetas[0];
     owner: TAccountMetas[1];
-    systemProgram: TAccountMetas[2];
+    state: TAccountMetas[2];
+    systemProgram: TAccountMetas[3];
   };
   data: WithdrawInstructionData;
 };
@@ -176,7 +281,7 @@ export function parseWithdrawInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedWithdrawInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -191,6 +296,7 @@ export function parseWithdrawInstruction<
     accounts: {
       campaign: getNextAccount(),
       owner: getNextAccount(),
+      state: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getWithdrawInstructionDataDecoder().decode(instruction.data),
