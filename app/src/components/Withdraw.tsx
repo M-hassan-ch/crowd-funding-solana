@@ -87,7 +87,6 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
       );
       console.log("Withdraw signature:", signature.toString());
       alert("Withdraw successful!");
-      setIsWithdrawn(true);
     } catch (error) {
       console.error(error);
       alert("Error while withdrawing");
