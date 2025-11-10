@@ -1,78 +1,107 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+"use client";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useEffect, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useSolanaClient, useAccount } from "@gillsdk/react";
+import { getCampaignStateDecoder } from "@/generated";
+import { GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
+import { fetchAllMaybeCampaign } from "@/generated/accounts/campaign";
+import { Campaign } from "@/types";
+import { PublicKey } from "@solana/web3.js";
+import { useCampaigns } from "@/context/CampaignContext";
+import CampaignCard from "@/components/CampaignCard";
 
 export default function Home() {
+  const { publicKey } = useWallet();
+  const { rpc } = useSolanaClient();
+  const { account: campaignState, isLoading: isCampaignStateLoading } =
+    useAccount({
+      address: GLOBAL_CAMPAIGN_STATE_ADDRESS.toBase58(),
+      decoder: getCampaignStateDecoder(),
+    });
+
+  const { campaigns, setCampaigns } = useCampaigns();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // load on first visit only if empty (to avoid double-fetch on SSR)
+    if (campaigns.length === 0) fetchCampaigns();
+  }, [publicKey, campaignState, isCampaignStateLoading, rpc]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const updatedCampaigns = localStorage.getItem("updated");
+      if (updatedCampaigns) {
+        fetchCampaigns();
+        localStorage.removeItem("updated");
+      }
+    }
+  }, [typeof window]);
+
+  const fetchCampaigns = async () => {
+    if (!publicKey) return;
+    if (!isCampaignStateLoading && campaignState) {
+      try {
+        setLoading(true);
+
+        const maybeAccounts = await fetchAllMaybeCampaign(
+          rpc,
+          campaignState.data.campaigns
+        );
+
+        const existingCampaigns = maybeAccounts.filter(
+          (acc): acc is typeof acc & { exists: true } => acc.exists
+        );
+
+        const parsedCampaigns: Campaign[] = await Promise.all(
+          existingCampaigns.map(async (campaign) => {
+            return {
+              owner: new PublicKey(campaign.data.owner).toBase58(),
+              title: campaign.data.title,
+              description: campaign.data.description,
+              deadline: Number(campaign.data.deadline),
+              totalContribution: BigInt(campaign.data.totalContribution),
+              address: new PublicKey(campaign.address).toBase58(),
+              status:
+                Number(campaign.data.deadline) > Date.now() / 1000
+                  ? "active"
+                  : "expired",
+            };
+          })
+        );
+
+        setCampaigns(parsedCampaigns);
+      } catch (err) {
+        console.error("Error fetching campaigns:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
-    >
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the index.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs/pages/getting-started?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="flex min-h-screen w-full flex-col items-center justify-start py-16 px-6 bg-white dark:bg-black mx-auto">
+      <h1 className="text-2xl font-bold mb-4">All Campaigns</h1>
+
+      {loading && <p>Loading campaigns...</p>}
+      {!loading && campaigns.length === 0 && <p>No campaigns found</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+        {campaigns.map((c) => (
+          <CampaignCard
+            key={c.address}
+            title={c.title}
+            description={c.description}
+            owner={c.owner}
+            totalContribution={c.totalContribution}
+            deadline={Number(c.deadline)}
+            address={c.address}
+            status={
+              c.deadline > Math.floor(Date.now() / 1000) ? "active" : "expired"
+            }
+          />
+        ))}
+      </div>
+    </main>
   );
 }
