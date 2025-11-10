@@ -11,9 +11,7 @@ export default function MyCampaigns() {
 
   if (!publicKey) return <p>Connect a wallet first.</p>;
 
-  const myCampaigns = campaigns.filter(
-    (c) => new PublicKey(c.owner).toBase58() === publicKey.toBase58()
-  );
+  const myCampaigns = campaigns.filter((c) => c.owner === publicKey.toString());
 
   return (
     <main className="p-6">
@@ -24,7 +22,7 @@ export default function MyCampaigns() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-        {campaigns.map((c) => (
+        {myCampaigns.map((c) => (
           <CampaignCard
             key={c.address}
             title={c.title}
