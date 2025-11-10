@@ -105,22 +105,28 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
     }
   };
 
+  function getCampaignStatus() {
+    return Number(campaignToWithdraw?.deadline) > Date.now() / 1000
+      ? "active"
+      : "expired";
+  }
+
   return (
     <button
       onClick={handleWithdraw}
       disabled={
         loading ||
-        campaignToWithdraw?.status !== "expired" ||
-        publicKey?.toString() !== campaignToWithdraw.owner
+        getCampaignStatus() !== "expired" ||
+        publicKey?.toString() !== campaignToWithdraw?.owner
       }
       className={`px-4 py-2 rounded-md text-white ${
-        campaignToWithdraw?.status !== "expired" ||
-        publicKey?.toString() !== campaignToWithdraw.owner
+        getCampaignStatus() !== "expired" ||
+        publicKey?.toString() !== campaignToWithdraw?.owner
           ? "bg-gray-400 cursor-not-allowed"
           : "bg-red-500 hover:bg-red-700 cursor-pointer"
       }`}
     >
-      {campaignToWithdraw?.status !== "expired"
+      {getCampaignStatus() !== "expired"
         ? "Withdraw (Locked Until Deadline)"
         : "Withdraw"}
     </button>

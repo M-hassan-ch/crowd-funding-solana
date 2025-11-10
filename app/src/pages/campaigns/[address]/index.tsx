@@ -120,7 +120,9 @@ export default function CampaignDetailsPage() {
           campaign?.owner === publicKey?.toBase58() && (
             <Withdraw
               campaignAddress={addressBrand(campaign.address)}
-              status={campaign.status}
+              status={Number(campaign?.deadline) > Date.now() / 1000
+                ? "active"
+                : "expired"}
             />
           )
         }
