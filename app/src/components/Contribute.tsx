@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 interface ContributeProps {
   campaignAddress: Address;
   defaultAmount?: string; // default contribution, e.g., "0.01"
+  status: "active" | "expired";
 }
 
 export default function Contribute({
@@ -30,6 +31,7 @@ export default function Contribute({
   const { publicKey, signTransaction } = useWallet();
   const { rpc } = useSolanaClient();
   const { campaigns, setCampaigns } = useCampaigns();
+  // todo: update details page
   const router = useRouter();
   const [amount, setAmount] = useState(defaultAmount);
   const [loading, setLoading] = useState(false);
@@ -143,11 +145,20 @@ export default function Contribute({
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         className="border border-green-500 rounded-md px-4 py-2 w-24"
+        disabled={loading || campaignToContribute?.status === "expired"}
+        style={{
+          opacity:
+            loading || campaignToContribute?.status === "expired" ? 0.3 : 1,
+        }}
       />
       <button
         onClick={handleContribute}
-        disabled={loading}
         className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50 cursor-pointer"
+        disabled={loading || campaignToContribute?.status === "expired"}
+        style={{
+          opacity:
+            loading || campaignToContribute?.status === "expired" ? 0.3 : 1,
+        }}
       >
         {loading ? "Processing..." : "Contribute"}
       </button>

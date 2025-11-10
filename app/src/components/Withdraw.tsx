@@ -13,21 +13,35 @@ import { getWithdrawInstruction } from "@/generated/instructions";
 import { Transaction, PublicKey } from "@solana/web3.js";
 import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
 import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
+import { useCampaigns } from "@/context/CampaignContext";
+import { useRouter } from "next/router";
+import { useState } from "react";
 
 interface WithdrawProps {
   campaignAddress: Address;
+  status: "active" | "expired";
 }
 
 export default function Withdraw({ campaignAddress }: WithdrawProps) {
   const { publicKey, signTransaction } = useWallet();
   const { rpc } = useSolanaClient();
+  const { campaigns, setCampaigns } = useCampaigns();
+  const [loading, setLoading] = useState(false);
+  // todo: update details page
+  const router = useRouter();
 
+  // Find the campaign we are withdrawing from
+  const campaignToWithdraw = campaigns.find(
+    (c) => c.address === campaignAddress
+  );
   const handleWithdraw = async () => {
     try {
       if (!publicKey || !signTransaction) {
         alert("No wallet connected");
         return;
       }
+
+      setLoading(true);
 
       const signer = createNoopSigner(address(publicKey.toBase58()));
       const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
@@ -73,18 +87,34 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
       );
       console.log("Withdraw signature:", signature.toString());
       alert("Withdraw successful!");
+      setIsWithdrawn(true);
     } catch (error) {
       console.error(error);
       alert("Error while withdrawing");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <button
       onClick={handleWithdraw}
-      className="px-4 py-2 bg-red-500 text-white rounded-md"
+      disabled={
+        loading ||
+        campaignToWithdraw?.status !== "expired" || // <- NEW
+        !campaignToWithdraw?.owner ||
+        !publicKey ||
+        publicKey.toString() !== campaignToWithdraw.owner
+      }
+      className={`px-4 py-2 rounded-md text-white ${
+        campaignToWithdraw?.status !== "expired"
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-red-500 hover:bg-red-700 cursor-pointer"
+      }`}
     >
-      Withdraw
+      {campaignToWithdraw?.status !== "expired"
+        ? "Withdraw (Locked Until Deadline)"
+        : "Withdraw"}
     </button>
   );
 }

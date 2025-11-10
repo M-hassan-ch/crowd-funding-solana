@@ -1,4 +1,3 @@
-✔ Tags / statuses (Active / Expired) - wip
-✔ View Campaign modal, Add clickable details modal
+features:
+✔ Withdraw - on expired, check if contributions === 0, remove campaign === auto-Withdraw
 ✔ Copy address button
-✔ “Contribute” inline form

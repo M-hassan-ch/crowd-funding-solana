@@ -77,7 +77,6 @@ export default function CampaignDetailsPage() {
         }
       }
 
-      console.log({ found });
       setCampaign(found || null);
       setLoading(false);
     };
@@ -111,8 +110,14 @@ export default function CampaignDetailsPage() {
       </strong>
 
       <div className="flex gap-4 mt-4">
-        <Contribute campaignAddress={addressBrand(campaign.address)} />
-        <Withdraw campaignAddress={addressBrand(campaign.address)} />
+        <Contribute
+          campaignAddress={addressBrand(campaign.address)}
+          status={campaign.status}
+        />
+        <Withdraw
+          campaignAddress={addressBrand(campaign.address)}
+          status={campaign.status}
+        />
       </div>
     </main>
   );
