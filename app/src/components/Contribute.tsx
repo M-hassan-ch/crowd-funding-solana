@@ -17,6 +17,7 @@ import { SYSTEM_PROGRAM_ADDRESS } from "gill/programs";
 import { useState } from "react";
 import { useCampaigns } from "@/context/CampaignContext";
 import { useRouter } from "next/navigation";
+import { Campaign } from "@/types";
 
 interface ContributeProps {
   campaignAddress: Address;
@@ -114,10 +115,9 @@ export default function Contribute({
 
       alert(`Contribution of ${amount} SOL successful!`);
 
-      // Update campaigns context with new contribution
-      if (campaignToContribute) {
-        setCampaigns(
-          campaigns.map((c) =>
+      // Update campaigns context & local storage with new contribution
+      const updatedCampaigns: Campaign[] = campaigns.length
+        ? campaigns.map((c) =>
             c.address === campaignAddress
               ? {
                   ...c,
@@ -126,8 +126,17 @@ export default function Contribute({
                 }
               : c
           )
-        );
+        : [];
+
+      if (updatedCampaigns.length) {
+        setCampaigns(updatedCampaigns);
       }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("updated", JSON.stringify(true));
+      }
+
+      router.push("/");
     } catch (error) {
       console.error(error);
       alert("Error while contributing");

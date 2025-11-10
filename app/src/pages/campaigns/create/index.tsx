@@ -124,6 +124,9 @@ export default function CreateCampaign() {
           },
         ]);
         console.log("Transaction confirmed on-chain:", signature);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("updated", JSON.stringify(true));
+        }
         router.push("/campaigns/mine");
       }
     } catch (error: any) {

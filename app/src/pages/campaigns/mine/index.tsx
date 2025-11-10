@@ -2,7 +2,6 @@
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useCampaigns } from "@/context/CampaignContext";
-import { PublicKey } from "@solana/web3.js";
 import CampaignCard from "@/components/CampaignCard";
 
 export default function MyCampaigns() {
@@ -12,6 +11,10 @@ export default function MyCampaigns() {
   if (!publicKey) return <p>Connect a wallet first.</p>;
 
   const myCampaigns = campaigns.filter((c) => c.owner === publicKey.toString());
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("updated");
+  }
 
   return (
     <main className="p-6">

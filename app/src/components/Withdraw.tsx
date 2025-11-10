@@ -27,7 +27,6 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
   const { rpc } = useSolanaClient();
   const { campaigns, setCampaigns } = useCampaigns();
   const [loading, setLoading] = useState(false);
-  // todo: update details page
   const router = useRouter();
 
   // Find the campaign we are withdrawing from
@@ -87,6 +86,17 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
       );
       console.log("Withdraw signature:", signature.toString());
       alert("Withdraw successful!");
+
+      // update context & local storage
+      const filteredCampaigns = campaigns.filter(
+        (c) => c.address !== campaignAddress
+      );
+      setCampaigns(filteredCampaigns);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("updated", JSON.stringify(true));
+      }
+
+      router.push("/");
     } catch (error) {
       console.error(error);
       alert("Error while withdrawing");
@@ -100,13 +110,12 @@ export default function Withdraw({ campaignAddress }: WithdrawProps) {
       onClick={handleWithdraw}
       disabled={
         loading ||
-        campaignToWithdraw?.status !== "expired" || // <- NEW
-        !campaignToWithdraw?.owner ||
-        !publicKey ||
-        publicKey.toString() !== campaignToWithdraw.owner
+        campaignToWithdraw?.status !== "expired" ||
+        publicKey?.toString() !== campaignToWithdraw.owner
       }
       className={`px-4 py-2 rounded-md text-white ${
-        campaignToWithdraw?.status !== "expired"
+        campaignToWithdraw?.status !== "expired" ||
+        publicKey?.toString() !== campaignToWithdraw.owner
           ? "bg-gray-400 cursor-not-allowed"
           : "bg-red-500 hover:bg-red-700 cursor-pointer"
       }`}

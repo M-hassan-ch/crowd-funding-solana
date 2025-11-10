@@ -28,6 +28,16 @@ export default function Home() {
     if (campaigns.length === 0) fetchCampaigns();
   }, [publicKey, campaignState, isCampaignStateLoading, rpc]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const updatedCampaigns = localStorage.getItem("updated");
+      if (updatedCampaigns) {
+        fetchCampaigns();
+        localStorage.removeItem("updated");
+      }
+    }
+  }, [typeof window]);
+
   const fetchCampaigns = async () => {
     if (!publicKey) return;
     if (!isCampaignStateLoading && campaignState) {
@@ -69,22 +79,9 @@ export default function Home() {
     }
   };
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    await fetchCampaigns();
-    setLoading(false);
-  };
-
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-start py-16 px-6 bg-white dark:bg-black mx-auto">
       <h1 className="text-2xl font-bold mb-4">All Campaigns</h1>
-      <button
-        onClick={handleRefresh}
-        disabled={loading}
-        className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700 mb-4 cursor-pointer"
-      >
-        {loading ? "Refreshing..." : "Refresh"}
-      </button>
 
       {loading && <p>Loading campaigns...</p>}
       {!loading && campaigns.length === 0 && <p>No campaigns found</p>}
