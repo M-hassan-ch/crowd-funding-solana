@@ -12,9 +12,11 @@ import { Address, address as addressBrand } from "gill";
 import Contribute from "@/components/Contribute";
 import Withdraw from "@/components/Withdraw";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export default function CampaignDetailsPage() {
   const params = useParams();
+  const { publicKey } = useWallet();
   const { rpc } = useSolanaClient();
   const { campaigns } = useCampaigns();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -114,10 +116,14 @@ export default function CampaignDetailsPage() {
           campaignAddress={addressBrand(campaign.address)}
           status={campaign.status}
         />
-        <Withdraw
-          campaignAddress={addressBrand(campaign.address)}
-          status={campaign.status}
-        />
+        {
+          campaign?.owner === publicKey?.toBase58() && (
+            <Withdraw
+              campaignAddress={addressBrand(campaign.address)}
+              status={campaign.status}
+            />
+          )
+        }
       </div>
     </main>
   );
