@@ -120,7 +120,7 @@ export default function Contribute({
               ? {
                   ...c,
                   actualContributions:
-                    BigInt(c.actualContributions ?? 0) + lamports,
+                    BigInt(c.totalContribution ?? 0) + lamports,
                 }
               : c
           )

@@ -5,6 +5,7 @@ export interface Campaign {
   deadline: number;
   totalContribution: bigint;
   address: string;
+  status: "active" | "expired";
 }
 
 export interface CampaignState {

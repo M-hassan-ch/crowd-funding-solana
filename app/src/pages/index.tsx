@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSolanaClient, useAccount } from "@gillsdk/react";
 import { getCampaignStateDecoder } from "@/generated";
-import { CONNECTION, GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
-import { getActualContributions } from "@/utils";
+import { GLOBAL_CAMPAIGN_STATE_ADDRESS } from "@/constants";
 import { fetchAllMaybeCampaign } from "@/generated/accounts/campaign";
 import { Campaign } from "@/types";
 import { PublicKey } from "@solana/web3.js";
@@ -46,10 +45,6 @@ export default function Home() {
 
         const parsedCampaigns: Campaign[] = await Promise.all(
           existingCampaigns.map(async (campaign) => {
-            const actualContributions = await getActualContributions(
-              campaign,
-              CONNECTION
-            );
             return {
               owner: new PublicKey(campaign.data.owner).toBase58(),
               title: campaign.data.title,
@@ -57,7 +52,10 @@ export default function Home() {
               deadline: Number(campaign.data.deadline),
               totalContribution: BigInt(campaign.data.totalContribution),
               address: new PublicKey(campaign.address).toBase58(),
-              actualContributions,
+              status:
+                Number(campaign.data.deadline) > Date.now() / 1000
+                  ? "active"
+                  : "expired",
             };
           })
         );
@@ -78,7 +76,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-start py-16 px-6 bg-white dark:bg-black mx-auto">
+    <main className="flex min-h-screen w-full flex-col items-center justify-start py-16 px-6 bg-white dark:bg-black mx-auto">
       <h1 className="text-2xl font-bold mb-4">All Campaigns</h1>
       <button
         onClick={handleRefresh}
@@ -101,7 +99,9 @@ export default function Home() {
             totalContribution={c.totalContribution}
             deadline={Number(c.deadline)}
             address={c.address}
-            // onClick={() => console.log("View:", c.address)}
+            status={
+              c.deadline > Math.floor(Date.now() / 1000) ? "active" : "expired"
+            }
           />
         ))}
       </div>

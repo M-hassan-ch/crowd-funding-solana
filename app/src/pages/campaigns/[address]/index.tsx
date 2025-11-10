@@ -64,6 +64,11 @@ export default function CampaignDetailsPage() {
             deadline: Number(c.data.deadline),
             totalContribution: BigInt(c.data.totalContribution + contributions),
             address: c.address,
+            status:
+              // todo: extract to util
+              Number(c.data.deadline) > Math.floor(Date.now() / 1000)
+                ? "active"
+                : "expired",
           };
         } catch (err) {
           console.error(err);
@@ -72,6 +77,7 @@ export default function CampaignDetailsPage() {
         }
       }
 
+      console.log({ found });
       setCampaign(found || null);
       setLoading(false);
     };
@@ -87,7 +93,6 @@ export default function CampaignDetailsPage() {
       <h1 className="text-2xl font-bold">{campaign.title}</h1>
       <p className="text-gray-600 dark:text-gray-300">{campaign.description}</p>
       <p className="text-xs mt-1">Owner: {campaign.owner}</p>
-
       <p className="text-xs mt-1">
         Deadline: {new Date(campaign.deadline * 1000).toLocaleString()}
       </p>
@@ -95,6 +100,15 @@ export default function CampaignDetailsPage() {
         Total Contribution:{" "}
         {Number(campaign.totalContribution) / LAMPORTS_PER_SOL} SOL
       </p>
+      <strong
+        className={`py-1 rounded text-xs font-medium ${
+          campaign.status === "active"
+            ? "bg-green-600/15 text-green-500"
+            : "bg-red-600/15 text-red-500"
+        }`}
+      >
+        {campaign.status === "active" ? "Active" : "Expired"}
+      </strong>
 
       <div className="flex gap-4 mt-4">
         <Contribute campaignAddress={addressBrand(campaign.address)} />

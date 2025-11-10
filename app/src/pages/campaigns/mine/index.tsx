@@ -33,7 +33,12 @@ export default function MyCampaigns() {
             totalContribution={c.totalContribution}
             deadline={Number(c.deadline)}
             address={c.address}
-            // onClick={() => console.log("View:", c.address)}
+            status={
+              // todo: extract to util
+              Number(c.deadline) > Math.floor(Date.now() / 1000)
+                ? "active"
+                : "expired"
+            }
           />
         ))}
       </div>

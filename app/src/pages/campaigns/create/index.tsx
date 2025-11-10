@@ -120,6 +120,7 @@ export default function CreateCampaign() {
             address: campaignPDA.toBase58(),
             owner: publicKey.toBase58(),
             totalContribution: BigInt(0),
+            status: "active",
           },
         ]);
         console.log("Transaction confirmed on-chain:", signature);
