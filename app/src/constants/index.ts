@@ -8,4 +8,4 @@ export const PROGRAM_ID = new PublicKey(
 export const CONNECTION = new Connection("https://api.devnet.solana.com", {
   commitment: "confirmed",
 });
-export const GLOBAL_CAMPAIGN_STATE_ADDRESS = deriveGlobalCampaignStatePDA();
+export const GLOBAL_CAMPAIGN_STATE_ADDRESS = new PublicKey("5yfFCs8rKecStwQ64B3h3gKYNsExrtzyQ2tqsvapyyWc");
