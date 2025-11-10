@@ -11,6 +11,7 @@ import { Campaign } from "@/types";
 import { Address, address as addressBrand } from "gill";
 import Contribute from "@/components/Contribute";
 import Withdraw from "@/components/Withdraw";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function CampaignDetailsPage() {
   const params = useParams();
@@ -61,9 +62,8 @@ export default function CampaignDetailsPage() {
             title: c.data.title,
             description: c.data.description,
             deadline: Number(c.data.deadline),
-            total_contribution: c.data.totalContribution,
+            totalContribution: BigInt(c.data.totalContribution + contributions),
             address: c.address,
-            actualContributions: contributions,
           };
         } catch (err) {
           console.error(err);
@@ -87,14 +87,13 @@ export default function CampaignDetailsPage() {
       <h1 className="text-2xl font-bold">{campaign.title}</h1>
       <p className="text-gray-600 dark:text-gray-300">{campaign.description}</p>
       <p className="text-xs mt-1">Owner: {campaign.owner}</p>
-      <p className="text-xs mt-1">
-        Contributions: {campaign.actualContributions ?? 0}
-      </p>
+
       <p className="text-xs mt-1">
         Deadline: {new Date(campaign.deadline * 1000).toLocaleString()}
       </p>
       <p className="text-xs mt-1">
-        Total Contribution: {campaign.total_contribution}
+        Total Contribution:{" "}
+        {Number(campaign.totalContribution) / LAMPORTS_PER_SOL} SOL
       </p>
 
       <div className="flex gap-4 mt-4">

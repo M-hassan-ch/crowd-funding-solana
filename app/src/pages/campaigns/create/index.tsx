@@ -119,7 +119,7 @@ export default function CreateCampaign() {
             deadline: Number(deadlineBigInt),
             address: campaignPDA.toBase58(),
             owner: publicKey.toBase58(),
-            total_contribution: BigInt(0),
+            totalContribution: BigInt(0),
           },
         ]);
         console.log("Transaction confirmed on-chain:", signature);

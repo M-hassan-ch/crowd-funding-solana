@@ -55,7 +55,7 @@ export default function Home() {
               title: campaign.data.title,
               description: campaign.data.description,
               deadline: Number(campaign.data.deadline),
-              total_contribution: BigInt(campaign.data.totalContribution),
+              totalContribution: BigInt(campaign.data.totalContribution),
               address: new PublicKey(campaign.address).toBase58(),
               actualContributions,
             };
@@ -98,7 +98,7 @@ export default function Home() {
             title={c.title}
             description={c.description}
             owner={c.owner}
-            actualContributions={c.actualContributions}
+            totalContribution={c.totalContribution}
             deadline={Number(c.deadline)}
             address={c.address}
             // onClick={() => console.log("View:", c.address)}

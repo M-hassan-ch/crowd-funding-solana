@@ -3,9 +3,8 @@ export interface Campaign {
   title: string;
   description: string;
   deadline: number;
-  total_contribution: bigint;
+  totalContribution: bigint;
   address: string;
-  actualContributions?: bigint;
 }
 
 export interface CampaignState {

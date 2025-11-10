@@ -30,13 +30,13 @@ export default function MyCampaigns() {
             title={c.title}
             description={c.description}
             owner={c.owner}
-            actualContributions={c.actualContributions}
+            totalContribution={c.totalContribution}
             deadline={Number(c.deadline)}
             address={c.address}
             // onClick={() => console.log("View:", c.address)}
           />
         ))}
-      </div>  
+      </div>
     </main>
   );
 }
