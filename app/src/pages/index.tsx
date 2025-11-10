@@ -10,6 +10,7 @@ import { fetchAllMaybeCampaign } from "@/generated/accounts/campaign";
 import { Campaign } from "@/types";
 import { PublicKey } from "@solana/web3.js";
 import { useCampaigns } from "@/context/CampaignContext";
+import CampaignCard from "@/components/CampaignCard";
 
 export default function Home() {
   const { publicKey } = useWallet();
@@ -90,26 +91,18 @@ export default function Home() {
       {loading && <p>Loading campaigns...</p>}
       {!loading && campaigns.length === 0 && <p>No campaigns found</p>}
 
-      <div className="grid gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {campaigns.map((c) => (
-          <div
+          <CampaignCard
             key={c.address}
-            className="p-4 border rounded-md bg-gray-50 dark:bg-zinc-800"
-          >
-            <h2 className="font-semibold text-lg">{c.title}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {c.description}
-            </p>
-            <p className="text-xs mt-1">
-              Owner: {new PublicKey(c.owner).toBase58()}
-            </p>
-            <p className="text-xs mt-1">
-              Contributions: {c.actualContributions}
-            </p>
-            <p className="text-xs mt-1">
-              Deadline: {new Date(Number(c.deadline) * 1000).toLocaleString()}
-            </p>
-          </div>
+            title={c.title}
+            description={c.description}
+            owner={c.owner}
+            actualContributions={c.actualContributions}
+            deadline={Number(c.deadline)}
+            address={c.address}
+            // onClick={() => console.log("View:", c.address)}
+          />
         ))}
       </div>
     </main>

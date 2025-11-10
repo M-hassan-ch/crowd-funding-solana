@@ -3,6 +3,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useCampaigns } from "@/context/CampaignContext";
 import { PublicKey } from "@solana/web3.js";
+import CampaignCard from "@/components/CampaignCard";
 
 export default function MyCampaigns() {
   const { publicKey } = useWallet();
@@ -22,12 +23,20 @@ export default function MyCampaigns() {
         <p>You have not created any campaigns yet.</p>
       )}
 
-      {myCampaigns.map((c) => (
-        <div key={c.address} className="p-4 border rounded-md mb-3">
-          <h2 className="font-semibold">{c.title}</h2>
-          <p>{c.description}</p>
-        </div>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+        {campaigns.map((c) => (
+          <CampaignCard
+            key={c.address}
+            title={c.title}
+            description={c.description}
+            owner={c.owner}
+            actualContributions={c.actualContributions}
+            deadline={Number(c.deadline)}
+            address={c.address}
+            // onClick={() => console.log("View:", c.address)}
+          />
+        ))}
+      </div>  
     </main>
   );
 }
